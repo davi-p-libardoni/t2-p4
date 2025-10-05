@@ -422,22 +422,70 @@ void jan_troca_ancora(janela_t *jan)
   jan->cursor_txt = ancora;
 }
 
+// posiciona a lista linhas na linha atual do cursor
+static void jan_posiciona_lista(janela_t *jan){
+  ls_posiciona(jan->txt->linhas,jan->cursor_txt.lin);
+}
+
 // insere uma linha vazia abaixo da linha do cursor
-void jan_abre_linha_abaixo(janela_t *jan) {}
+void jan_abre_linha_abaixo(janela_t *jan) {
+  jan_posiciona_lista(jan);
+  ls_insere_depois(jan->txt->linhas,s_(""));
+  
+}
 // insere uma linha vazia acima da linha do cursor
-void jan_abre_linha_acima(janela_t *jan) {}
+void jan_abre_linha_acima(janela_t *jan) {
+  jan_posiciona_lista(jan);
+  ls_insere_antes(jan->txt->linhas,s_(""));
+  
+}
 // quebra a linha na posição do cursor (o conteúdo da linha do cursor
 //   a partir da posição do cursor é movido para uma nova linha)
-void jan_quebra_linha(janela_t *jan) {}
+void jan_quebra_linha(janela_t *jan) {
+  jan_posiciona_lista(jan);
+  str* textoLinha = ls_item_ptr(jan->txt->linhas);
+  str resto = s_copia(s_sub(*textoLinha,jan->cursor_txt.col,textoLinha->tamc));
+  s_subst(textoLinha,jan->cursor_txt.col,textoLinha->tamc,s_(""),s_(""));
+  ls_posiciona(jan->txt->linhas,jan->cursor_txt.lin);
+  ls_insere_depois(jan->txt->linhas,resto);
+  s_destroi(resto);
+}
 // a linha abaixo do cursor é removida, e seu conteúdo é concatenado à
 //   linha do cursor
-void jan_junta_linhas(janela_t *jan) {}
+void jan_junta_linhas(janela_t *jan) {
+  jan_posiciona_lista(jan);
+  str* atual = ls_item_ptr(jan->txt->linhas);
+  ls_avanca(jan->txt->linhas);
+  str* prox = ls_item_ptr(jan->txt->linhas);
+  s_cat(atual,*prox);
+  ls_remove(jan->txt->linhas);
+}
 // remove o caractere sob o cursor
-void jan_remove_char(janela_t *jan) {}
+void jan_remove_char(janela_t *jan) {
+  jan_posiciona_lista(jan);
+  str* atual = ls_item_ptr(jan->txt->linhas);
+  s_subst(atual,jan->cursor_txt.col,1,s_(""),s_(""));
+}
 // altera o caractere sob o cursor para ter o valor de uni
-void jan_altera_char(janela_t *jan, unichar uni) {}
+void jan_altera_char(janela_t *jan, unichar uni) {
+  jan_posiciona_lista(jan);
+  str* atual = ls_item_ptr(jan->txt->linhas);
+  byte* caracter = (byte*)malloc(4*sizeof(byte));
+  int cBytes = u8_converte_pra_utf8(uni,caracter);
+  str sCaracter = s_cria_buf(caracter,cBytes,1);
+  s_subst(atual,jan->cursor_txt.col,1,sCaracter,s_(""));
+  free(caracter);
+}
 // insere o caractere com o valor de uni logo antes do caractere do cursor
-void jan_insere_char(janela_t *jan, unichar uni) {}
+void jan_insere_char(janela_t *jan, unichar uni) {
+  jan_posiciona_lista(jan);
+  str* atual = ls_item_ptr(jan->txt->linhas);
+  byte* caracter = (byte*)malloc(4*sizeof(byte));
+  int cBytes = u8_converte_pra_utf8(uni,caracter);
+  str sCaracter = s_cria_buf(caracter,cBytes,1);
+  s_subst(atual,jan->cursor_txt.col,0,sCaracter,s_(""));
+  free(caracter);
+}
 
 // remove o caractere à esquerda do cursor, se houver
 void jan_remove_char_esquerda(janela_t *jan)

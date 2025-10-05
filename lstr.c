@@ -61,7 +61,7 @@ str ls_item(Lstr self){
     return item;
 }
 
-str *ls_item_prt(Lstr self){
+str *ls_item_ptr(Lstr self){
     assert(ls_item_valido(self));
     return &self->corrente->string;
 }
